@@ -42,7 +42,8 @@ class BaseHandler(webapp2.RequestHandler):
         #template_values['url'] = users.create_login_url(self.request.uri)
 
         template = JINJA_ENVIRONMENT.get_template(filename)
-        self.response.out.write(template.render(template_values))
+        #self.response.out.write(template.render(template_values))
+        self.response.out.write(template)
 
 class MainHandler(BaseHandler):
     def get(self):
