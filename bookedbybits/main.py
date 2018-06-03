@@ -18,10 +18,27 @@ import webapp2
 import jinja2
 import os
 
+#from models import Post, Place, Comment
+
+from google.appengine.ext import ndb
+from google.appengine.api import users
+
+
 JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'static\public')),
+    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'templates')),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
+
+class ToDo:
+    def __init__(self, title, name_of_coy, type_of_task, name, reccomended_time, start_time, end_time, time_spent):
+        self.title = title
+        self.name_of_coy = name_of_coy
+        self.type_of_task = type_of_task
+        self.name = name
+        self.reccomended_time = reccomended_time
+        self.start_time = start_time
+        self.end_time = end_time
+        self.time_spent = time_spent
 
 class BaseHandler(webapp2.RequestHandler):
     @webapp2.cached_property
@@ -31,24 +48,31 @@ class BaseHandler(webapp2.RequestHandler):
     def render_template(self,
         filename,
         template_values):
-##        self.user = users.get_current_user()
-##        if user:
-##          template_values['user']= user.nickname()
-##          template_values['url_linktext'] = 'Logout'
-##          template_values['url'] = users.create_logout_url(self.request.uri)
-##        else:
-        #template_values['user'] = 'anonymous'
-        #template_values['url_linktext'] = 'Login'
-        #template_values['url'] = users.create_login_url(self.request.uri)
+        self.user = users.get_current_user()
+        if self.user:
+          template_values['user']= user.nickname()
+          template_values['url_linktext'] = 'Logout'
+          template_values['url'] = users.create_logout_url(self.request.uri)
+        else:
+            template_values['user'] = 'anonymous'
+            template_values['url_linktext'] = 'Login'
+            template_values['url'] = users.create_login_url(self.request.uri)
 
         template = JINJA_ENVIRONMENT.get_template(filename)
-        #self.response.out.write(template.render(template_values))
-        self.response.out.write(template)
-
+        self.response.out.write(template.render(template_values))
+        
 class MainHandler(BaseHandler):
     def get(self):
-        self.render_template('index.html', {})
+        self.render_template('index.html', {"hi":"yo"})
+
+class ToDoListHandler(BaseHandler):
+    def get(self):
+        test_list = []
+        for i in range(10):
+            test_list.append(ToDo(i,i,i,i,i,i,i,i))
+        self.render_template('list.html', {'to_do_list':test_list})
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/todolist', ToDoListHandler)
 ], debug=True)
