@@ -63,7 +63,7 @@ class BaseHandler(webapp2.RequestHandler):
         
 class MainHandler(BaseHandler):
     def get(self):
-        self.render_template('index.html', {"hi":"yo"})
+        self.render_template('landing.html', {"hi":"yo"})
 
 class ToDoListHandler(BaseHandler):
     def get(self):
