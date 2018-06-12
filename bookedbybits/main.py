@@ -17,8 +17,11 @@
 import webapp2
 import jinja2
 import os
+import json
+import datetime
+import logging
 
-#from models import Post, Place, Comment
+from models import ToDoItem
 
 from google.appengine.ext import ndb
 from google.appengine.api import users
@@ -39,7 +42,18 @@ class ToDo:
         self.start_time = start_time
         self.end_time = end_time
         self.time_spent = time_spent
+        
+class RestHandler(webapp2.RequestHandler):
+    def decorateHeaders(self):
+        """Decorates headers for the current request."""
+        self.response.headers.add_header('Access-Control-Allow-Origin', '*')
+        self.response.headers.add_header('Access-Control-Allow-Headers', 'Authorization, content-type')
+        self.response.headers.add_header('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE')
 
+    def options(self):
+        """Default OPTIONS handler for the entire app."""
+        self.decorateHeaders()
+        
 class BaseHandler(webapp2.RequestHandler):
     @webapp2.cached_property
     def jinja2(self):
@@ -63,7 +77,7 @@ class BaseHandler(webapp2.RequestHandler):
         
 class MainHandler(BaseHandler):
     def get(self):
-        self.render_template('landing.html', {"hi":"yo"})
+        self.render_template('index.html', {"hi":"yo"})
 
 class ToDoListHandler(BaseHandler):
     def get(self):
@@ -72,7 +86,91 @@ class ToDoListHandler(BaseHandler):
             test_list.append(ToDo(i,i,i,i,i,i,i,i))
         self.render_template('list.html', {'to_do_list':test_list})
 
+class JsonHandler(RestHandler):
+    def get(self):
+        self.decorateHeaders();
+        self.response.headers['Content-Type'] = 'application/json'
+        todo_query = ToDoItem.query().fetch()
+        json_array = []
+        for todoitem in todo_query:
+            new_dict = {
+                "onCreateTimeStamp" : (todoitem.onCreateTimeStamp -  datetime.datetime(1970,1,1)).total_seconds(),
+                 "onFinishTimeStamp" : (todoitem.onFinishTimeStamp -  datetime.datetime(1970,1,1)).total_seconds(),
+                 "deadline" : todoitem.deadline,
+                 "predictedTime" : todoitem.predictedTime,
+                 "usedTime" : todoitem.usedTime,
+                 "onCheckInTimeStamps" : todoitem.onCheckInTimeStamps,
+                 "onCheckOutTimeStamps": todoitem.onCheckOutTimeStamps,
+                 "taskDescription": todoitem.taskDescription,
+                 "taskType": todoitem.taskType,
+                 "reason": todoitem.reason,
+                 "auditorName": todoitem.auditorName,
+                 "managerName": todoitem.managerName,
+                 "confirmSubmitted": todoitem.confirmSubmitted,
+                 "confirmSubmittedTimeStamp": (todoitem.confirmSubmittedTimeStamp -  datetime.datetime(1970,1,1)).total_seconds() 
+            }
+            json_array.append(new_dict)
+
+##        obj = [
+##            {"onCreateTimeStamp": time.time(),
+##             "onFinishTimeStamp": time.time(),
+##             "deadline": time.time(),
+##             "predictedTime": time.time(),
+##             "usedTime": 123,
+##             "onCheckInTimeStamps": [time.time(),time.time()],
+##             "onCheckOutTimeStamps": [time.time(),time.time()],
+##             "taskDescription": "Stupid amos",
+##             "taskType": "Stock take",
+##             "reason": None ,
+##             "auditorName": "Amos",
+##             "managerName": "Jordan",
+##             "confirmSubmitted": False,
+##             "confirmSubmittedTimeStamp": time.time(),
+##             "ID":id(2)},
+##            
+##            {"onCreateTimeStamp": time.time(),
+##             "onFinishTimeStamp": time.time(),
+##             "deadline": time.time(),
+##             "predictedTime": time.time(),
+##             "usedTime": 123,
+##             "onCheckInTimeStamps": [time.time(),time.time()],
+##             "onCheckOutTimeStamps": [time.time(),time.time()],
+##             "taskDescription": "amos Stupid Stupid",
+##             "taskType": "Stock take",
+##             "reason": None ,
+##             "auditorName": "Amos",
+##             "managerName": "Jordan",
+##             "confirmSubmitted": False,
+##             "confirmSubmittedTimeStamp": time.time(),
+##             "ID":id(3)}
+##            ]
+
+        self.response.out.write(json.dumps(json_array))
+
+    def post(self):
+        self.decorateHeaders();
+        myjson = json.loads(self.request.body)
+        todo = ToDoItem(
+            #onFinishTimeStamp = myjson['onFinishTimeStamp'],
+            #deadline = myjson['deadline'],
+            #predictedTime = myjson['predictedTime'],
+            #usedTime = myjson['usedTime'],
+            #onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
+            #onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
+            taskDescription = myjson['taskDescription'],
+            taskType = myjson['taskType'],
+            #reason = myjson['reason'],
+            auditorName = myjson['auditorName'],
+            managerName = myjson['managerName'],
+            #confirmSubmitted = myjson['confirmSubmitted'],
+            #confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp']
+            )
+        todo.put()
+            
+        
+
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
-    ('/todolist', ToDoListHandler)
+    ('/todolist', ToDoListHandler),
+    ('/json', JsonHandler)
 ], debug=True)
