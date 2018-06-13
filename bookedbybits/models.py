@@ -15,3 +15,6 @@ class ToDoItem(ndb.Model):
     managerName = ndb.StringProperty()
     confirmSubmitted = ndb.BooleanProperty(default = False)
     confirmSubmittedTimeStamp = ndb.DateTimeProperty(auto_now_add=True)
+    iD = ndb.IntegerProperty(default=0)
+    checker = ndb.BooleanProperty(default = False)
+    

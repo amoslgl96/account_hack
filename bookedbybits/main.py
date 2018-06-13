@@ -54,17 +54,15 @@ class RestHandler(webapp2.RequestHandler):
         """Default OPTIONS handler for the entire app."""
         self.decorateHeaders()
         
-class BaseHandler(webapp2.RequestHandler):
+class BaseHandler(RestHandler):
     @webapp2.cached_property
     def jinja2(self):
         return jinja2.get_jinja2(app = self.app)
 
-    def render_template(self,
-        filename,
-        template_values):
+    def render_template(self, filename, template_values):
         self.user = users.get_current_user()
         if self.user:
-          template_values['user']= user.nickname()
+          template_values['user']= self.user.nickname()
           template_values['url_linktext'] = 'Logout'
           template_values['url'] = users.create_logout_url(self.request.uri)
         else:
@@ -77,16 +75,9 @@ class BaseHandler(webapp2.RequestHandler):
         
 class MainHandler(BaseHandler):
     def get(self):
-        self.render_template('index.html', {"hi":"yo"})
+        self.render_template('landing.html', {})
 
-class ToDoListHandler(BaseHandler):
-    def get(self):
-        test_list = []
-        for i in range(10):
-            test_list.append(ToDo(i,i,i,i,i,i,i,i))
-        self.render_template('list.html', {'to_do_list':test_list})
-
-class JsonHandler(RestHandler):
+class JsonHandler(BaseHandler):
     def get(self):
         self.decorateHeaders();
         self.response.headers['Content-Type'] = 'application/json'
@@ -151,19 +142,21 @@ class JsonHandler(RestHandler):
         self.decorateHeaders();
         myjson = json.loads(self.request.body)
         todo = ToDoItem(
-            #onFinishTimeStamp = myjson['onFinishTimeStamp'],
-            #deadline = myjson['deadline'],
-            #predictedTime = myjson['predictedTime'],
-            #usedTime = myjson['usedTime'],
-            #onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
-            #onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
+            onFinishTimeStamp = myjson['onFinishTimeStamp'],
+            deadline = myjson['deadline'],
+            predictedTime = myjson['predictedTime'],
+            usedTime = myjson['usedTime'],
+            onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
+            onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
             taskDescription = myjson['taskDescription'],
             taskType = myjson['taskType'],
-            #reason = myjson['reason'],
+            reason = myjson['reason'],
             auditorName = myjson['auditorName'],
             managerName = myjson['managerName'],
-            #confirmSubmitted = myjson['confirmSubmitted'],
-            #confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp']
+            confirmSubmitted = myjson['confirmSubmitted'],
+            confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp'],
+            iD = myjson['iD'],
+            checker = myjson['checker']
             )
         todo.put()
             
@@ -171,6 +164,5 @@ class JsonHandler(RestHandler):
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
-    ('/todolist', ToDoListHandler),
     ('/json', JsonHandler)
 ], debug=True)
