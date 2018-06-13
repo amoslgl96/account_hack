@@ -21,7 +21,7 @@ import json
 import datetime
 import logging
 
-from models import ToDoItem
+from models import ToDoItem, Employee
 
 from google.appengine.ext import ndb
 from google.appengine.api import users
@@ -86,87 +86,46 @@ class JsonHandler(BaseHandler):
         self.decorateHeaders();
         self.response.headers['Content-Type'] = 'application/json'
         todo_query = ToDoItem.query().fetch()
-        json_array = []
-        for todoitem in todo_query:
-            new_dict = {
-                "onCreateTimeStamp" : (todoitem.onCreateTimeStamp -  datetime.datetime(1970,1,1)).total_seconds(),
-                 "onFinishTimeStamp" : (todoitem.onFinishTimeStamp -  datetime.datetime(1970,1,1)).total_seconds(),
-                 "deadline" : todoitem.deadline,
-                 "predictedTime" : todoitem.predictedTime,
-                 "usedTime" : todoitem.usedTime,
-                 "onCheckInTimeStamps" : todoitem.onCheckInTimeStamps,
-                 "onCheckOutTimeStamps": todoitem.onCheckOutTimeStamps,
-                 "taskDescription": todoitem.taskDescription,
-                 "taskType": todoitem.taskType,
-                 "reason": todoitem.reason,
-                 "auditorName": todoitem.auditorName,
-                 "managerName": todoitem.managerName,
-                 "confirmSubmitted": todoitem.confirmSubmitted,
-                 "confirmSubmittedTimeStamp": (todoitem.confirmSubmittedTimeStamp -  datetime.datetime(1970,1,1)).total_seconds() 
-            }
-            json_array.append(new_dict)
-
-##        obj = [
-##            {"onCreateTimeStamp": time.time(),
-##             "onFinishTimeStamp": time.time(),
-##             "deadline": time.time(),
-##             "predictedTime": time.time(),
-##             "usedTime": 123,
-##             "onCheckInTimeStamps": [time.time(),time.time()],
-##             "onCheckOutTimeStamps": [time.time(),time.time()],
-##             "taskDescription": "Stupid amos",
-##             "taskType": "Stock take",
-##             "reason": None ,
-##             "auditorName": "Amos",
-##             "managerName": "Jordan",
-##             "confirmSubmitted": False,
-##             "confirmSubmittedTimeStamp": time.time(),
-##             "ID":id(2)},
-##            
-##            {"onCreateTimeStamp": time.time(),
-##             "onFinishTimeStamp": time.time(),
-##             "deadline": time.time(),
-##             "predictedTime": time.time(),
-##             "usedTime": 123,
-##             "onCheckInTimeStamps": [time.time(),time.time()],
-##             "onCheckOutTimeStamps": [time.time(),time.time()],
-##             "taskDescription": "amos Stupid Stupid",
-##             "taskType": "Stock take",
-##             "reason": None ,
-##             "auditorName": "Amos",
-##             "managerName": "Jordan",
-##             "confirmSubmitted": False,
-##             "confirmSubmittedTimeStamp": time.time(),
-##             "ID":id(3)}
-##            ]
-
+        json_array = ToDoItem.toJson(todo_query)
         self.response.out.write(json.dumps(json_array))
 
     def post(self):
         self.decorateHeaders();
         myjson = json.loads(self.request.body)
-        todo = ToDoItem(
-            onFinishTimeStamp = myjson['onFinishTimeStamp'],
-            deadline = myjson['deadline'],
-            predictedTime = myjson['predictedTime'],
-            usedTime = myjson['usedTime'],
-            onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
-            onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
-            taskDescription = myjson['taskDescription'],
-            taskType = myjson['taskType'],
-            reason = myjson['reason'],
-            auditorName = myjson['auditorName'],
-            managerName = myjson['managerName'],
-            confirmSubmitted = myjson['confirmSubmitted'],
-            confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp'],
-            iD = myjson['iD'],
-            checker = myjson['checker']
-            )
-        todo.put()
+        logging.info(myjson)
+        ToDoItem.createFromJson(myjson)
+        
+
+class UserHandler(BaseHandler):
+    def get(self):
+        self.decorateHeaders();
+        self.user = users.get_current_user()
+        if self.user:#logged in
+            query = Employee.get_by_id(self.user.nickname())
+            if query: #account has been created
+                self.response.headers['Content-Type'] = 'application/json'
+                self.response.out.write(json.dumps(Employee.toJson(query)))
+            else: #no account, create account
+                if self.request.get('isManager') == "true": #is manager
+                    new_employee = Employee(id = self.user.nickname(),
+                                       isManager = True,
+                                       userName = self.user.nickname()
+                                       )
+                else: #employee
+                    new_employee = Employee(id = self.user.nickname(),
+                                       isManager = False,
+                                       userName = user.nickname()
+                                       )
+                new_employee.put()
+        else:
+            self.redirect('/') #go back to landing to login
             
+
+        
         
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
+    ('/getuser', UserHandler),
     ('/json', JsonHandler)
 ], debug=True)
