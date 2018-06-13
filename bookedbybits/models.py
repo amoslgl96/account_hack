@@ -1,6 +1,4 @@
 from google.appengine.ext import ndb
-import datetime
-import logging
 
 class Employee(ndb.Model):
     userName = ndb.StringProperty()
