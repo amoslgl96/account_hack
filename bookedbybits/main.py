@@ -104,7 +104,9 @@ class UserHandler(BaseHandler):
             query = Employee.get_by_id(self.user.nickname())
             if query: #account has been created
                 self.response.headers['Content-Type'] = 'application/json'
-                self.response.out.write(json.dumps(Employee.toJson(query)))
+                json_dict = Employee.toJson(query)
+                json_dict["logout_link"] = users.create_logout_url(self.request.uri)
+                self.response.out.write(json.dumps(json_dict))
             else: #no account, create account
                 if self.request.get('isManager') == "true": #is manager
                     new_employee = Employee(id = self.user.nickname(),
@@ -126,6 +128,6 @@ class UserHandler(BaseHandler):
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
-    ('/getuser', UserHandler),
+    ('/getcurrentuser', UserHandler),
     ('/json', JsonHandler)
 ], debug=True)
