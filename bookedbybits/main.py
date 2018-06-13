@@ -75,7 +75,11 @@ class BaseHandler(RestHandler):
         
 class MainHandler(BaseHandler):
     def get(self):
-        self.render_template('landing.html', {})
+        self.user = users.get_current_user()
+        if self.user:
+            self.render_template('index.html', {})
+        else:
+            self.render_template('landing.html', {})
 
 class JsonHandler(BaseHandler):
     def get(self):

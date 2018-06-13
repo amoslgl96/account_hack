@@ -14,12 +14,9 @@ handlers:
  
 - url: /static/images
   static_dir: static/images
- #upload: static/.*\.(gif|png|jpg)$
- 
-#- url: /static/images(.*\.jpg)$
-#  static_dir: /static/images/\1
-#  upload: /static/images/.*\.jpg$
-#  mime_type: "image/jpeg"
+
+- url: /static/js
+  static_dir: static/js
  
 - url: .*
   script: main.app
