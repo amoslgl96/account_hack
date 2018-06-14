@@ -36,25 +36,45 @@ class ToDoItem(ndb.Model):
 #TODO
 ##        manager = Employee.get_by_id(myjson['managerName'])
 ##        auditor = Employee.get_by_id(myjson['auditorName'])
-        new_todo = ToDoItem(
-            onCreateTimeStamp = myjson['onCreateTimeStamp'],
-            onFinishTimeStamp = myjson['onFinishTimeStamp'],
-            deadLine = myjson['deadLine'],
-            predictedTime = myjson['predictedTime'],
-            usedTime = myjson['usedTime'],
-            onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
-            onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
-            taskDescription = myjson['taskDescription'],
-            taskType = myjson['taskType'],
-            reason = myjson['reason'],
-            confirmSubmitted = myjson['confirmSubmitted'],
-            confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp'],
-            id = myjson['iD'],
-            checker = myjson['checker'],
-            auditorName = myjson['auditorName'],
-            managerName = myjson['managerName']
-            )
-        new_todo.put()
+
+        query = ToDoItem.get_by_id(myjson['iD'])
+        if query: #item exist
+            query.onCreateTimeStamp = myjson['onCreateTimeStamp'],
+            query.onFinishTimeStamp = myjson['onFinishTimeStamp'],
+            query.deadLine = myjson['deadLine'],
+            query.predictedTime = myjson['predictedTime'],
+            query.usedTime = myjson['usedTime'],
+            query.onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
+            query.onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
+            query.taskDescription = myjson['taskDescription'],
+            query.taskType = myjson['taskType'],
+            query.reason = myjson['reason'],
+            query.confirmSubmitted = myjson['confirmSubmitted'],
+            query.confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp'],
+            query.checker = myjson['checker'],
+            query.auditorName = myjson['auditorName'],
+            query.managerName = myjson['managerName']
+            query.put
+        else:
+            new_todo = ToDoItem(
+                onCreateTimeStamp = myjson['onCreateTimeStamp'],
+                onFinishTimeStamp = myjson['onFinishTimeStamp'],
+                deadLine = myjson['deadLine'],
+                predictedTime = myjson['predictedTime'],
+                usedTime = myjson['usedTime'],
+                onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
+                onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
+                taskDescription = myjson['taskDescription'],
+                taskType = myjson['taskType'],
+                reason = myjson['reason'],
+                confirmSubmitted = myjson['confirmSubmitted'],
+                confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp'],
+                id = myjson['iD'],
+                checker = myjson['checker'],
+                auditorName = myjson['auditorName'],
+                managerName = myjson['managerName']
+                )
+            new_todo.put()
 
 
     @staticmethod     
