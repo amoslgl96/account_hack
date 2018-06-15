@@ -1,4 +1,9 @@
 from google.appengine.ext import ndb
+import datetime
+import logging
+
+def convertToJsonEpoch(databaseItem): #receive datetime object
+    return (databaseItem - datetime.datetime(1970,1,1)).total_seconds() /1000
 
 class Employee(ndb.Model):
     userName = ndb.StringProperty()
@@ -11,15 +16,16 @@ class Employee(ndb.Model):
                     "isManager" : query.isManager,
                     "manager" : query.manager}
         return new_dict
+
     
 class ToDoItem(ndb.Model):
-    onCreateTimeStamp = ndb.IntegerProperty()
-    onFinishTimeStamp = ndb.IntegerProperty()
-    deadLine = ndb.IntegerProperty(default=0)
-    predictedTime = ndb.IntegerProperty(default=0)
-    usedTime = ndb.IntegerProperty(default=0)
-    onCheckInTimeStamps = ndb.IntegerProperty(repeated = True)
-    onCheckOutTimeStamps = ndb.IntegerProperty(repeated = True)
+    onCreateTimeStamp = ndb.DateTimeProperty()
+    onFinishTimeStamp = ndb.DateTimeProperty()
+    deadLine = ndb.DateTimeProperty(default=0)
+    predictedTime = ndb.DateTimeProperty(default=0)
+    usedTime = ndb.DateTimeProperty(default=0)
+    onCheckInTimeStamps = ndb.DateTimeProperty(repeated = True)
+    onCheckOutTimeStamps = ndb.DateTimeProperty(repeated = True)
     taskDescription = ndb.StringProperty()
     taskType = ndb.StringProperty()
     reason = ndb.StringProperty(default = "")
@@ -28,15 +34,40 @@ class ToDoItem(ndb.Model):
     auditorName = ndb.StringProperty()
     managerName = ndb.StringProperty() 
     confirmSubmitted = ndb.BooleanProperty(default = False)
-    confirmSubmittedTimeStamp = ndb.IntegerProperty()
+    confirmSubmittedTimeStamp = ndb.DateTimeProperty()
     checker = ndb.BooleanProperty(default = False)
 
+    @staticmethod
+    def myDateTimeConvert(epochtime):
+        logging.info(type(epochtime))
+        if type(epochtime) == type([]):
+            new_a = []
+            for i in epochtime:
+                new_a.append(myDateTimeConvert(i))
+            return new_a
+        else:
+            return datetime.datetime.fromtimestamp(epochtime/1000) #javascript gives out in milisecons, python expects seconds
+
+    @staticmethod
+    def cleanJsonDateTime(myjson):
+        logging.info('DEADLINE')
+        logging.info(myjson['deadLine'])
+        myjson['onCreateTimeStamp'] = ToDoItem.myDateTimeConvert(myjson['onCreateTimeStamp'])
+        myjson['onFinishTimeStamp'] = ToDoItem.myDateTimeConvert(myjson['onFinishTimeStamp'])
+        myjson['deadLine'] = ToDoItem.myDateTimeConvert(myjson['deadLine'])
+        myjson['predictedTime'] = ToDoItem.myDateTimeConvert(myjson['predictedTime'])
+        myjson['usedTime'] = ToDoItem.myDateTimeConvert(myjson['usedTime'])
+        myjson['onCheckInTimeStamps']= ToDoItem.myDateTimeConvert(myjson['onCheckInTimeStamps'])
+        myjson['onCheckOutTimeStamps'] = ToDoItem.myDateTimeConvert(myjson['onCheckOutTimeStamps'])
+        myjson['confirmSubmittedTimeStamp'] = ToDoItem.myDateTimeConvert(myjson['confirmSubmittedTimeStamp'])
+
+                
     @staticmethod
     def createFromJson(myjson):
 #TODO
 ##        manager = Employee.get_by_id(myjson['managerName'])
 ##        auditor = Employee.get_by_id(myjson['auditorName'])
-
+        ToDoItem.cleanJsonDateTime(myjson)
         query = ToDoItem.get_by_id(myjson['iD'])
         if query: #item exist
             query.onCreateTimeStamp = myjson['onCreateTimeStamp'],
@@ -82,11 +113,11 @@ class ToDoItem(ndb.Model):
         json_array = []
         for todoitem in iterable:
             new_dict = {
-                "onCreateTimeStamp" : todoitem.onCreateTimeStamp,
-                "onFinishTimeStamp" : todoitem.onFinishTimeStamp,
-                "deadline" : todoitem.deadLine,
-                "predictedTime" : todoitem.predictedTime,
-                "usedTime" : todoitem.usedTime,
+                "onCreateTimeStamp" : convertToJsonEpoch(todoitem.onCreateTimeStamp),
+                "onFinishTimeStamp" : convertToJsonEpoch(todoitem.onFinishTimeStamp),
+                "deadline" : convertToJsonEpoch(todoitem.deadLine),
+                "predictedTime" : convertToJsonEpoch(todoitem.predictedTime),
+                "usedTime" : convertToJsonEpoch(todoitem.usedTime),
                 "onCheckInTimeStamps" : todoitem.onCheckInTimeStamps,
                 "onCheckOutTimeStamps": todoitem.onCheckOutTimeStamps,
                 "taskDescription": todoitem.taskDescription,
@@ -95,7 +126,7 @@ class ToDoItem(ndb.Model):
                 "auditorName": todoitem.auditorName,
                 "managerName": todoitem.managerName,
                 "confirmSubmitted": todoitem.confirmSubmitted,
-                "confirmSubmittedTimeStamp": todoitem.confirmSubmittedTimeStamp,
+                "confirmSubmittedTimeStamp": convertToJsonEpoch(todoitem.confirmSubmittedTimeStamp),
                 "iD": todoitem.key.id(),
                 'checker': todoitem.checker
             }
