@@ -79,25 +79,27 @@ class ToDoItem(ndb.Model):
         ToDoItem.cleanJsonDateTime(myjson)
         query = ToDoItem.get_by_id(myjson['iD'])
         if query: #item exist
-            query.onCreateTimeStamp = myjson['onCreateTimeStamp'],
-            query.onFinishTimeStamp = myjson['onFinishTimeStamp'],
-            query.deadLine = myjson['deadLine'],
-            query.predictedTime = myjson['predictedTime'],
-            query.usedTime = myjson['usedTime'],
-            query.onCheckInTimeStamps = myjson['onCheckInTimeStamps'],
-            query.onCheckOutTimeStamps = myjson['onCheckOutTimeStamps'],
-            query.taskDescription = myjson['taskDescription'],
-            query.taskType = myjson['taskType'],
-            query.reason = myjson['reason'],
-            query.confirmSubmitted = myjson['confirmSubmitted'],
-            query.confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp'],
-            query.checker = myjson['checker'],
-            query.auditorName = myjson['auditorName'],
-            query.managerName = myjson['managerName'],
+            logging.info("Edit to do")
+            query.onCreateTimeStamp = myjson['onCreateTimeStamp']
+            query.onFinishTimeStamp = myjson['onFinishTimeStamp']
+            query.deadLine = myjson['deadLine']
+            query.predictedTime = myjson['predictedTime']
+            query.usedTime = myjson['usedTime']
+            query.onCheckInTimeStamps = myjson['onCheckInTimeStamps']
+            query.onCheckOutTimeStamps = myjson['onCheckOutTimeStamps']
+            query.taskDescription = myjson['taskDescription']
+            query.taskType = myjson['taskType']
+            query.reason = myjson['reason']
+            query.confirmSubmitted = myjson['confirmSubmitted']
+            query.confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp']
+            query.checker = myjson['checker']
+            query.auditorName = myjson['auditorName']
+            query.managerName = myjson['managerName']
             query.progress = myjson['progress']
-
-            query.put
+            query.put()
+            
         else:
+            logging.info("New to do")
             new_todo = ToDoItem(
                 onCreateTimeStamp = myjson['onCreateTimeStamp'],
                 onFinishTimeStamp = myjson['onFinishTimeStamp'],
