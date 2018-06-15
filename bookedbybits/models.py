@@ -24,6 +24,7 @@ class Employee(ndb.Model):
     userName = ndb.StringProperty()
     isManager = ndb.BooleanProperty()
     manager = ndb.KeyProperty()
+    currentLocation = ndb.StringProperty(default = "office")
 
     @staticmethod
     def toJson(query):

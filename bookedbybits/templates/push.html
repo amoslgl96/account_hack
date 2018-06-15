@@ -13,6 +13,7 @@
 </head>
 
 <body>
+ <h1 id="bigOne"></h1>
 <script src="https://www.gstatic.com/firebasejs/5.0.4/firebase.js"></script>
 <script>
   // Initialize Firebase
@@ -25,6 +26,24 @@
     messagingSenderId: "586068157501"
   };
   firebase.initializeApp(config);
+   const messaging = firebase.messaging();
+  navigator.serviceWorker.register('/static/js/firebase-messaging-sw.js')
+  .then((registration) => {
+	messaging.useServiceWorker(registration);
+	messaging.requestPermission()
+	return messaging.getToken();
+  })
+  .then(function(token){
+	console.log(token);
+  })
+  .catch(function(err){
+	console.log('No permission');
+  });
+  
+  messaging.onMessage(function(payload){
+	console.log('onMessage: ', payload);
+  })
+
 </script>
   
 </body>
