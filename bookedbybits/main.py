@@ -125,7 +125,7 @@ class UserHandler(BaseHandler):
 
 class AllUserHandler(BaseHandler):
     def get(self):
-        self.decorateHeaders();
+        self.decorateHeaders()
         self.response.headers['Content-Type'] = 'application/json'
         employee_query = Employee.query().fetch()
         json_array = Employee.toJson(employee_query)

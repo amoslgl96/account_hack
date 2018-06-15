@@ -2,8 +2,23 @@ from google.appengine.ext import ndb
 import datetime
 import logging
 
-def convertToJsonEpoch(databaseItem): #receive datetime object
+def convertToJsonEpoch(databaseItem): #receive datetime objec
+    if type(databaseItem) == type([]):
+        new_a = []
+        for timestamp in databaseItem:
+            new_a.append(convertToJsonEpoch(timestamp))
+        return new_a
     return (databaseItem - datetime.datetime(1970,1,1)).total_seconds() * 1000
+
+def convertToDateTime(epochtime):
+        logging.info(type(epochtime))
+        if type(epochtime) == type([]):
+            new_a = []
+            for i in epochtime:
+                new_a.append(convertToDateTime(i))
+            return new_a
+        else:
+            return datetime.datetime.fromtimestamp(epochtime/1000) #javascript gives out in milisecons, python expects seconds
 
 class Employee(ndb.Model):
     userName = ndb.StringProperty()
@@ -32,7 +47,7 @@ class ToDoItem(ndb.Model):
     onFinishTimeStamp = ndb.DateTimeProperty()
     deadLine = ndb.DateTimeProperty(default=0)
     predictedTime = ndb.DateTimeProperty(default=0)
-    usedTime = ndb.DateTimeProperty(default=0)
+    usedTime = ndb.IntegerProperty(default=0)
     onCheckInTimeStamps = ndb.DateTimeProperty(repeated = True)
     onCheckOutTimeStamps = ndb.DateTimeProperty(repeated = True)
     taskDescription = ndb.StringProperty()
@@ -47,29 +62,18 @@ class ToDoItem(ndb.Model):
     checker = ndb.BooleanProperty(default = False)
     progress = ndb.StringProperty()
 
-    @staticmethod
-    def myDateTimeConvert(epochtime):
-        logging.info(type(epochtime))
-        if type(epochtime) == type([]):
-            new_a = []
-            for i in epochtime:
-                new_a.append(myDateTimeConvert(i))
-            return new_a
-        else:
-            return datetime.datetime.fromtimestamp(epochtime/1000) #javascript gives out in milisecons, python expects seconds
-
+    
     @staticmethod
     def cleanJsonDateTime(myjson):
         logging.info('DEADLINE')
         logging.info(myjson['deadLine'])
-        myjson['onCreateTimeStamp'] = ToDoItem.myDateTimeConvert(myjson['onCreateTimeStamp'])
-        myjson['onFinishTimeStamp'] = ToDoItem.myDateTimeConvert(myjson['onFinishTimeStamp'])
-        myjson['deadLine'] = ToDoItem.myDateTimeConvert(myjson['deadLine'])
-        myjson['predictedTime'] = ToDoItem.myDateTimeConvert(myjson['predictedTime'])
-        myjson['usedTime'] = ToDoItem.myDateTimeConvert(myjson['usedTime'])
-        myjson['onCheckInTimeStamps']= ToDoItem.myDateTimeConvert(myjson['onCheckInTimeStamps'])
-        myjson['onCheckOutTimeStamps'] = ToDoItem.myDateTimeConvert(myjson['onCheckOutTimeStamps'])
-        myjson['confirmSubmittedTimeStamp'] = ToDoItem.myDateTimeConvert(myjson['confirmSubmittedTimeStamp'])
+        myjson['onCreateTimeStamp'] = convertToDateTime(myjson['onCreateTimeStamp'])
+        myjson['onFinishTimeStamp'] = convertToDateTime(myjson['onFinishTimeStamp'])
+        myjson['deadLine'] = convertToDateTime(myjson['deadLine'])
+        myjson['predictedTime'] = convertToDateTime(myjson['predictedTime'])
+        myjson['onCheckInTimeStamps']= convertToDateTime(myjson['onCheckInTimeStamps'])
+        myjson['onCheckOutTimeStamps'] = convertToDateTime(myjson['onCheckOutTimeStamps'])
+        myjson['confirmSubmittedTimeStamp'] = convertToDateTime(myjson['confirmSubmittedTimeStamp'])
                 
     @staticmethod
     def createFromJson(myjson):
@@ -132,9 +136,9 @@ class ToDoItem(ndb.Model):
                 "onFinishTimeStamp" : convertToJsonEpoch(todoitem.onFinishTimeStamp),
                 "deadLine" : convertToJsonEpoch(todoitem.deadLine),
                 "predictedTime" : convertToJsonEpoch(todoitem.predictedTime),
-                "usedTime" : convertToJsonEpoch(todoitem.usedTime),
-                "onCheckInTimeStamps" : todoitem.onCheckInTimeStamps,
-                "onCheckOutTimeStamps": todoitem.onCheckOutTimeStamps,
+                "usedTime" : todoitem.usedTime,
+                "onCheckInTimeStamps" : convertToJsonEpoch(todoitem.onCheckInTimeStamps),
+                "onCheckOutTimeStamps": convertToJsonEpoch(todoitem.onCheckOutTimeStamps),
                 "taskDescription": todoitem.taskDescription,
                 "taskType": todoitem.taskType,
                 "reason": todoitem.reason,
