@@ -3,7 +3,7 @@ import datetime
 import logging
 
 def convertToJsonEpoch(databaseItem): #receive datetime object
-    return (databaseItem - datetime.datetime(1970,1,1)).total_seconds() /1000
+    return (databaseItem - datetime.datetime(1970,1,1)).total_seconds() * 1000
 
 class Employee(ndb.Model):
     userName = ndb.StringProperty()
@@ -12,10 +12,19 @@ class Employee(ndb.Model):
 
     @staticmethod
     def toJson(query):
-        new_dict = {"userName" : query.userName,
-                    "isManager" : query.isManager,
-                    "manager" : query.manager}
-        return new_dict
+        if type(query) == type([]):
+            new_a = []
+            for employee in query:
+                new_dict = {"userName" : employee.userName,
+                        "isManager" : employee.isManager,
+                        "manager" : employee.manager}
+                new_a.append(new_dict)
+            return new_a
+        else:
+            new_dict = {"userName" : query.userName,
+                        "isManager" : query.isManager,
+                        "manager" : query.manager}
+            return new_dict
 
     
 class ToDoItem(ndb.Model):
@@ -36,6 +45,7 @@ class ToDoItem(ndb.Model):
     confirmSubmitted = ndb.BooleanProperty(default = False)
     confirmSubmittedTimeStamp = ndb.DateTimeProperty()
     checker = ndb.BooleanProperty(default = False)
+    progress = ndb.StringProperty()
 
     @staticmethod
     def myDateTimeConvert(epochtime):
@@ -60,7 +70,6 @@ class ToDoItem(ndb.Model):
         myjson['onCheckInTimeStamps']= ToDoItem.myDateTimeConvert(myjson['onCheckInTimeStamps'])
         myjson['onCheckOutTimeStamps'] = ToDoItem.myDateTimeConvert(myjson['onCheckOutTimeStamps'])
         myjson['confirmSubmittedTimeStamp'] = ToDoItem.myDateTimeConvert(myjson['confirmSubmittedTimeStamp'])
-
                 
     @staticmethod
     def createFromJson(myjson):
@@ -84,7 +93,9 @@ class ToDoItem(ndb.Model):
             query.confirmSubmittedTimeStamp = myjson['confirmSubmittedTimeStamp'],
             query.checker = myjson['checker'],
             query.auditorName = myjson['auditorName'],
-            query.managerName = myjson['managerName']
+            query.managerName = myjson['managerName'],
+            query.progress = myjson['progress']
+
             query.put
         else:
             new_todo = ToDoItem(
@@ -103,19 +114,21 @@ class ToDoItem(ndb.Model):
                 id = myjson['iD'],
                 checker = myjson['checker'],
                 auditorName = myjson['auditorName'],
-                managerName = myjson['managerName']
+                managerName = myjson['managerName'],
+                progress = myjson['progress']
                 )
             new_todo.put()
 
 
     @staticmethod     
     def toJson(iterable):
+        logging.info(type(iterable))
         json_array = []
         for todoitem in iterable:
             new_dict = {
                 "onCreateTimeStamp" : convertToJsonEpoch(todoitem.onCreateTimeStamp),
                 "onFinishTimeStamp" : convertToJsonEpoch(todoitem.onFinishTimeStamp),
-                "deadline" : convertToJsonEpoch(todoitem.deadLine),
+                "deadLine" : convertToJsonEpoch(todoitem.deadLine),
                 "predictedTime" : convertToJsonEpoch(todoitem.predictedTime),
                 "usedTime" : convertToJsonEpoch(todoitem.usedTime),
                 "onCheckInTimeStamps" : todoitem.onCheckInTimeStamps,
@@ -128,7 +141,8 @@ class ToDoItem(ndb.Model):
                 "confirmSubmitted": todoitem.confirmSubmitted,
                 "confirmSubmittedTimeStamp": convertToJsonEpoch(todoitem.confirmSubmittedTimeStamp),
                 "iD": todoitem.key.id(),
-                'checker': todoitem.checker
+                'checker': todoitem.checker,
+                'progress': todoitem.progress
             }
             json_array.append(new_dict)
         return json_array

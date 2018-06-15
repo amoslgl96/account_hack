@@ -116,12 +116,21 @@ class UserHandler(BaseHandler):
                 else: #employee
                     new_employee = Employee(id = self.user.nickname(),
                                        isManager = False,
-                                       userName = user.nickname()
+                                       userName = self.user.nickname()
                                        )
                 new_employee.put()
         else:
             self.redirect('/') #go back to landing to login
             
+
+class AllUserHandler(BaseHandler):
+    def get(self):
+        self.decorateHeaders();
+        self.response.headers['Content-Type'] = 'application/json'
+        employee_query = Employee.query().fetch()
+        json_array = Employee.toJson(employee_query)
+        self.response.out.write(json.dumps(json_array))
+
 
         
         
@@ -129,5 +138,6 @@ class UserHandler(BaseHandler):
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/getcurrentuser', UserHandler),
-    ('/json', JsonHandler)
+    ('/json', JsonHandler),
+    ('/getallusers', AllUserHandler)
 ], debug=True)
