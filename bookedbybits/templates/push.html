@@ -25,24 +25,27 @@
     storageBucket: "bookedbybits.appspot.com",
     messagingSenderId: "586068157501"
   };
+  var bigOne = document.getElementById("bigOne")
   firebase.initializeApp(config);
-   const messaging = firebase.messaging();
-  navigator.serviceWorker.register('/static/js/firebase-messaging-sw.js')
-  .then((registration) => {
-	messaging.useServiceWorker(registration);
-	messaging.requestPermission()
-	return messaging.getToken();
-  })
-  .then(function(token){
-	console.log(token);
-  })
-  .catch(function(err){
-	console.log('No permission');
-  });
+   var dbRef = firebase.database().ref().child('bookedbybits').child('text');
+   dbRef.on('value',snap => bigOne.innerText = snap.val());
+1   
+  <!-- navigator.serviceWorker.register('/static/js/firebase-messaging-sw.js') -->
+  <!-- .then((registration) => { -->
+	<!-- messaging.useServiceWorker(registration); -->
+	<!-- messaging.requestPermission() -->
+	<!-- return messaging.getToken(); -->
+  <!-- }) -->
+  <!-- .then(function(token){ -->
+	<!-- console.log(token); -->
+  <!-- }) -->
+  <!-- .catch(function(err){ -->
+	<!-- console.log('No permission'); -->
+  <!-- }); -->
   
-  messaging.onMessage(function(payload){
-	console.log('onMessage: ', payload);
-  })
+  <!-- messaging.onMessage(function(payload){ -->
+	<!-- console.log('onMessage: ', payload); -->
+  <!-- }) -->
 
 </script>
   

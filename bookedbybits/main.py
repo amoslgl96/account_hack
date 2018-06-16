@@ -25,6 +25,15 @@ from models import ToDoItem, Employee
 
 from google.appengine.ext import ndb
 from google.appengine.api import users
+from oauth2client.client import GoogleCredentials
+
+import httplib2
+#from firebase import firebase
+
+_FIREBASE_SCOPES = [
+    'https://www.googleapis.com/auth/firebase.database',
+    'https://www.googleapis.com/auth/userinfo.email']
+
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -76,8 +85,12 @@ class BaseHandler(RestHandler):
 class MainHandler(BaseHandler):
     def get(self):
         self.user = users.get_current_user()
-        if self.user:
-            self.render_template('index.html', {})
+        if self.user: #if logged in
+            query = Employee.get_by_id(self.user.nickname())
+            if query: #account created
+                self.render_template('index.html', {})
+            else:
+                self.redirect('/getcurrentuser')
         else:
             self.render_template('landing.html', {})
 
@@ -98,7 +111,7 @@ class JsonHandler(BaseHandler):
 
 class UserHandler(BaseHandler):
     def get(self):
-        self.decorateHeaders();
+        self.decorateHeaders()
         self.user = users.get_current_user()
         if self.user:#logged in
             query = Employee.get_by_id(self.user.nickname())
@@ -119,8 +132,14 @@ class UserHandler(BaseHandler):
                                        userName = self.user.nickname()
                                        )
                 new_employee.put()
+                self.redirect('/')                
         else:
             self.redirect('/') #go back to landing to login
+    def post(self):
+        self.decorateHeaders()
+        myjson = json.loads(self.request.body)
+        
+
             
 
 class AllUserHandler(BaseHandler):
@@ -133,11 +152,117 @@ class AllUserHandler(BaseHandler):
 
 
         
+class PushTest(BaseHandler):
+    def get(self):
+        logging.info("yooo")
+        self.render_template('push.html', {})
+
+
+def _get_http():
+    """Provides an authed http object."""
+    http = httplib2.Http()
+    # Use application default credentials to make the Firebase calls
+    # https://firebase.google.com/docs/reference/rest/database/user-auth
+    creds = GoogleCredentials.get_application_default().create_scoped(
+        _FIREBASE_SCOPES)
+    creds.authorize(http)
+    return http
+    
+def firebase_put(path, value=None):
+    """Writes data to Firebase.
+
+    An HTTP PUT writes an entire object at the given database path. Updates to
+    fields cannot be performed without overwriting the entire object
+
+    Args:
+        path - the url to the Firebase object to write.
+        value - a json string.
+    """
+    response, content = _get_http().request(path, method='PUT', body=value)
+    logging.info("gig")
+    logging.info(content)
+    logging.info(response)
+    return json.loads(content)
+
+def firebase_get(path):
+    """Read the data at the given path.
+
+    An HTTP GET request allows reading of data at a particular path.
+    A successful request will be indicated by a 200 OK HTTP status code.
+    The response will contain the data being retrieved.
+
+    Args:
+        path - the url to the Firebase object to read.
+    """
+    response, content = _get_http().request(path, method='GET')
+    return json.loads(content)
+
+
+
+
+
+
+def parseActionJson(myjson):
+    logging.info(myjson)
+    return myjson["queryResult"]["intent"]["displayName"]
+    
+def doAction(intent):
+    if intent == "check on my task":
+        todo_query = ToDoItem.query().fetch()
+        return str(len(todo_query))
+    else:
+        return "fuck you"
+
+def insertToJson(response):
+    sample_json = {"payload": {
+                    "google": {
+                      "expectUserResponse": True,
+                      "richResponse": {
+                        "items": [
+                          {
+                            "simpleResponse": {
+                              "textToSpeech": response
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+    return sample_json
+
         
+class PutTest(BaseHandler):
+    def get(self):
+        logging.info("hiiii")
+        body = json.dumps({"text":"get"})
+        self.response.out.write(firebase_put("https://bookedbybits.firebaseio.com/bookedbybits.json", body))
+
+    def post(self):
+        self.decorateHeaders()
+        self.response.headers['Content-Type'] = 'application/json'
+        body = json.dumps({"text":"activated by voice"})
+        firebase_put("https://bookedbybits.firebaseio.com/bookedbybits.json", body)
+        myjson = json.loads(self.request.body)
+        intent = parseActionJson(myjson)
+        response = doAction(intent)
+        logging.info("write out!")
+        logging.info(insertToJson(response))
+        self.response.out.write(json.dumps(insertToJson(response)))
+        
+class Reset(BaseHandler):
+    def get(self):
+        body = json.dumps({"text":"reset"})
+        self.response.out.write(firebase_put("https://bookedbybits.firebaseio.com/bookedbybits.json", body))
+        
+
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/getcurrentuser', UserHandler),
     ('/json', JsonHandler),
-    ('/getallusers', AllUserHandler)
+    ('/getallusers', AllUserHandler),
+    ('/push', PushTest),
+    ('/put', PutTest),
+    ('/reset', Reset)
 ], debug=True)

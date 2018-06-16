@@ -32,8 +32,8 @@ class Employee(ndb.Model):
             new_a = []
             for employee in query:
                 new_dict = {"userName" : employee.userName,
-                        "isManager" : employee.isManager,
-                        "manager" : employee.manager}
+                            "isManager" : employee.isManager,
+                            "manager" : employee.manager}
                 new_a.append(new_dict)
             return new_a
         else:
@@ -41,6 +41,16 @@ class Employee(ndb.Model):
                         "isManager" : query.isManager,
                         "manager" : query.manager}
             return new_dict
+
+    @staticmethod
+    def toDataStore(myjson):
+        query = Employee.get_by_id(self.user.nickname(myjson["userName"]))
+        query.isManager = myjson["isManager"]
+        query.manager = myjson["manager"]
+        query.currentLocation = myjson["currentLocation"]
+                    
+
+        
 
     
 class ToDoItem(ndb.Model):
