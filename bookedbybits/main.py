@@ -124,20 +124,20 @@ class UserHandler(BaseHandler):
                 if self.request.get('isManager') == "true": #is manager
                     new_employee = Employee(id = self.user.nickname(),
                                        isManager = True,
-                                       userName = self.user.nickname()
                                        )
                 else: #employee
                     new_employee = Employee(id = self.user.nickname(),
                                        isManager = False,
-                                       userName = self.user.nickname()
                                        )
                 new_employee.put()
                 self.redirect('/')                
         else:
             self.redirect('/') #go back to landing to login
+
     def post(self):
         self.decorateHeaders()
         myjson = json.loads(self.request.body)
+        Employee.toDataStore(myjson)
         
 
             
@@ -234,7 +234,6 @@ def insertToJson(response):
         
 class PutTest(BaseHandler):
     def get(self):
-        logging.info("hiiii")
         body = json.dumps({"text":"get"})
         self.response.out.write(firebase_put("https://bookedbybits.firebaseio.com/bookedbybits.json", body))
 

@@ -31,23 +31,27 @@ class Employee(ndb.Model):
         if type(query) == type([]):
             new_a = []
             for employee in query:
-                new_dict = {"userName" : employee.userName,
+                new_dict = {"userName" : employee.key.id(),
                             "isManager" : employee.isManager,
-                            "manager" : employee.manager}
+                            "manager" : employee.manager,
+                            "currentLocation" : employee.currentLocation}
                 new_a.append(new_dict)
             return new_a
         else:
-            new_dict = {"userName" : query.userName,
+            new_dict = {"userName" : query.key.id(),
                         "isManager" : query.isManager,
-                        "manager" : query.manager}
+                        "manager" : query.manager,
+                        "currentLocation" : query.currentLocation}
             return new_dict
 
     @staticmethod
     def toDataStore(myjson):
-        query = Employee.get_by_id(self.user.nickname(myjson["userName"]))
+        query = Employee.get_by_id(myjson["userName"])
         query.isManager = myjson["isManager"]
         query.manager = myjson["manager"]
+##        loggin.info(myjson["currentLocation"])
         query.currentLocation = myjson["currentLocation"]
+        query.put()
                     
 
         
